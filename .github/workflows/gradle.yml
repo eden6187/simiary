@@ -7,6 +7,10 @@
 
 name: Java CI with Gradle
 
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+
 on:
   push:
     branches: [ "main" ]
@@ -14,6 +18,20 @@ on:
     branches: [ "main" ]
 
 jobs:
+
+  configure_aws_credentials:
+    
+    runs-on: ubuntu-latest
+    steps:
+    - name: Git clone the repository
+      uses: actions/checkout@v4
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::286308765030:role/github_actions
+        aws-region: ap-northeast-2
+
+
   build:
 
     runs-on: ubuntu-latest
