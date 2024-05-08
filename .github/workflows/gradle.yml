@@ -7,6 +7,13 @@
 
 name: Java CI with Gradle
 
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+
+env:
+  S3_BUCKET_NAME: ngolo6187-app
+
 on:
   push:
     branches: [ "main" ]
@@ -14,11 +21,26 @@ on:
     branches: [ "main" ]
 
 jobs:
+
+  configure_aws_credentials:
+    
+    runs-on: ubuntu-latest
+    steps:
+    - name: Git clone the repository
+      uses: actions/checkout@v4
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::286308765030:role/github_actions
+        aws-region: ap-northeast-2
+
+
   build:
 
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
 
     steps:
     - uses: actions/checkout@v4
@@ -35,6 +57,20 @@ jobs:
 
     - name: Build with Gradle Wrapper
       run: ./gradlew build
+
+    - name: Make zip file
+      run: zip -r ./practice-deploy.zip .
+      shell: bash
+
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::286308765030:role/github_actions
+        aws-region: ap-northeast-2
+
+    - name: Upload to S3
+      run: aws s3 cp --region ap-northeast-2 ./practice-deploy.zip s3://$S3_BUCKET_NAME/practice-deploy.zip
+
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
